@@ -29,7 +29,7 @@ class Todo(db.Model):
 
 def token_required(f):
     @wraps(f)
-    def decorated(*args. **kwargs):
+    def decorated(*args, **kwargs):
         token = None
 
         if 'x-access-token' in request.headers:
