@@ -9,7 +9,8 @@ from functools import wraps
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'thisissecrret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/mamg/Documents/projects/test/api_flask/todo.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/mamg/Documents/projects/test/api_flask/todo.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///api_flask/todo.db'
 
 db = SQLAlchemy(app)
 
@@ -39,8 +40,8 @@ def token_required(f):
             return jsonify({'message': 'Token is missing'}), 401
 
         try:
-            data = jwt.encode(token, app.config['SECRET_KEY'])
-            current_user = User.query.filter_by(public_id=data['public_id'])
+            data = jwt.decode(token, app.config['SECRET_KEY'])
+            current_user = User.query.filter_by(public_id=data['public_id']).first()
         except:
             return jsonify({'message':'Token is invalid'}), 401
 
@@ -69,7 +70,12 @@ def login():
         return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 @app.route('/user', methods=['GET'])
-def get_all_users():
+@token_required
+def get_all_users(current_user):
+
+    if not current_user.admin:
+        return jsonify({'message':'Cannot perfom that function'})
+    
     users = User.query.all()
     output = []
     for user in users:
@@ -132,7 +138,7 @@ def delete_user(public_id):
     return jsonify({'message':'The user has been deleted'})
 
 
-@app.route("/", methods =['POST'])
+@app.route("/", methods =['GET'])
 def home():
     return jsonify({"response":"hola"})
 
